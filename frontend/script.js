@@ -6,7 +6,7 @@
 // ══════════════════════════════════════════════════════════════════════════════
 // 🔧 CONFIGURATION — Replace with your Render backend URL after deployment
 // ══════════════════════════════════════════════════════════════════════════════
-const API_URL = "https://YOUR-BACKEND-URL.onrender.com/predict";
+const API_URL = "https://kidney-disease-detection-t0y3.onrender.com/predict";
 // Example: const API_URL = "https://kidney-disease-api.onrender.com/predict";
 
 // ── Class styling metadata ─────────────────────────────────────────────────
