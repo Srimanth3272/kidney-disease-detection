@@ -1,26 +1,23 @@
-/* ─────────────────────────────────────────────────────────────────────────────
-   KidneyAI — script.js
-   Handles: drag-drop upload, image preview, API call, result rendering
-   ───────────────────────────────────────────────────────────────────────────── */
+/* ─── KidneyAI — script.js ──────────────────────────────────────────────── */
 
-// ══════════════════════════════════════════════════════════════════════════════
-// 🔧 CONFIGURATION — Replace with your Render backend URL after deployment
-// ══════════════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════════════
+// 🔧 Backend URL — Render deployment
+// ══════════════════════════════════════════════════════════════════════════
 const API_URL = "https://kidney-disease-detection-t0y3.onrender.com/predict";
-// Example: const API_URL = "https://kidney-disease-api.onrender.com/predict";
 
-// ── Class styling metadata ─────────────────────────────────────────────────
-const CLASS_META = {
-  Normal: { icon: "✅", color: "#34d399", barColor: "linear-gradient(90deg,#34d399,#059669)" },
-  Cyst:   { icon: "🔵", color: "#60a5fa", barColor: "linear-gradient(90deg,#60a5fa,#3b82f6)" },
-  Stone:  { icon: "🟡", color: "#fbbf24", barColor: "linear-gradient(90deg,#fbbf24,#d97706)" },
-  Tumor:  { icon: "🔴", color: "#f87171", barColor: "linear-gradient(90deg,#f87171,#ef4444)" },
+// ── Class metadata ─────────────────────────────────────────────────────
+const META = {
+  Normal: { emoji: "✅", cssClass: "cls-normal", color: "#34d399", bar: "linear-gradient(90deg,#34d399,#059669)" },
+  Cyst:   { emoji: "🔵", cssClass: "cls-cyst",   color: "#60a5fa", bar: "linear-gradient(90deg,#60a5fa,#3b82f6)" },
+  Stone:  { emoji: "🟡", cssClass: "cls-stone",  color: "#fbbf24", bar: "linear-gradient(90deg,#fbbf24,#d97706)" },
+  Tumor:  { emoji: "🔴", cssClass: "cls-tumor",  color: "#f87171", bar: "linear-gradient(90deg,#f87171,#ef4444)" },
 };
+const CLASS_ORDER = ["Normal", "Cyst", "Stone", "Tumor"];
 
-// ── DOM refs ───────────────────────────────────────────────────────────────
+// ── DOM refs ───────────────────────────────────────────────────────────
 const dropZone      = document.getElementById("drop-zone");
-const dropContent   = document.getElementById("drop-zone-content");
-const previewOverlay= document.getElementById("preview-overlay");
+const dropInner     = document.getElementById("drop-inner");
+const previewOvl    = document.getElementById("preview-overlay");
 const previewImg    = document.getElementById("preview-img");
 const fileInput     = document.getElementById("file-input");
 const browseBtn     = document.getElementById("browse-btn");
@@ -29,248 +26,180 @@ const analyzeBtn    = document.getElementById("analyze-btn");
 const analyzeText   = document.getElementById("analyze-text");
 const btnSpinner    = document.getElementById("btn-spinner");
 const resultSection = document.getElementById("result-section");
+const resultEmoji   = document.getElementById("result-emoji");
+const resultClass   = document.getElementById("result-class");
+const resultMsg     = document.getElementById("result-msg");
+const confPct       = document.getElementById("conf-pct");
+const ringFill      = document.getElementById("ring-fill");
+const scoresGrid    = document.getElementById("scores-grid");
 const resetBtn      = document.getElementById("reset-btn");
 
-// Result elements
-const resultIconWrap = document.getElementById("result-icon-wrap");
-const resultIcon     = document.getElementById("result-icon");
-const resultClass    = document.getElementById("result-class");
-const resultMessage  = document.getElementById("result-message");
-const confidencePct  = document.getElementById("confidence-pct");
-const ringFill       = document.getElementById("ring-fill");
-const scoresGrid     = document.getElementById("scores-grid");
-
-// ── State ──────────────────────────────────────────────────────────────────
 let selectedFile = null;
 
-// ══════════════════════════════════════════════════════════════════════════════
-// Upload / Preview logic
-// ══════════════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════════════
+// Upload / Preview
+// ══════════════════════════════════════════════════════════════════════════
 
-browseBtn.addEventListener("click", (e) => {
-  e.stopPropagation();
-  fileInput.click();
-});
-
-dropZone.addEventListener("click", () => {
-  if (!selectedFile) fileInput.click();
-});
-
+browseBtn.addEventListener("click", (e) => { e.stopPropagation(); fileInput.click(); });
+dropZone.addEventListener("click", () => { if (!selectedFile) fileInput.click(); });
 dropZone.addEventListener("keydown", (e) => {
-  if (e.key === "Enter" || e.key === " ") {
-    e.preventDefault();
-    if (!selectedFile) fileInput.click();
-  }
+  if ((e.key === "Enter" || e.key === " ") && !selectedFile) { e.preventDefault(); fileInput.click(); }
 });
 
 fileInput.addEventListener("change", () => {
-  if (fileInput.files && fileInput.files[0]) {
-    handleFile(fileInput.files[0]);
-  }
+  if (fileInput.files?.[0]) handleFile(fileInput.files[0]);
 });
 
 // Drag & drop
-dropZone.addEventListener("dragover", (e) => {
-  e.preventDefault();
-  dropZone.classList.add("dragover");
-});
-dropZone.addEventListener("dragleave", () => dropZone.classList.remove("dragover"));
+dropZone.addEventListener("dragover",  (e) => { e.preventDefault(); dropZone.classList.add("dragover"); });
+dropZone.addEventListener("dragleave", ()  => dropZone.classList.remove("dragover"));
 dropZone.addEventListener("drop", (e) => {
   e.preventDefault();
   dropZone.classList.remove("dragover");
-  const file = e.dataTransfer.files[0];
-  if (file) handleFile(file);
+  if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
 });
 
-removeBtn.addEventListener("click", (e) => {
-  e.stopPropagation();
-  clearFile();
-});
+removeBtn.addEventListener("click", (e) => { e.stopPropagation(); clearFile(); });
 
 function handleFile(file) {
-  // Validate type
-  const allowed = ["image/jpeg", "image/png", "image/bmp", "image/tiff", "image/jpg"];
+  const allowed = ["image/jpeg","image/jpg","image/png","image/bmp","image/tiff"];
   if (!allowed.includes(file.type)) {
     showError("Please upload a valid image file (JPG, PNG, BMP, or TIFF).");
     return;
   }
-
   selectedFile = file;
 
-  // Show preview
   const reader = new FileReader();
   reader.onload = (e) => {
-    previewImg.src = e.target.result;
-    dropContent.style.display = "none";
-    previewOverlay.style.display = "flex";
-    previewOverlay.removeAttribute("aria-hidden");
+    previewImg.src     = e.target.result;
+    dropInner.style.display  = "none";
+    previewOvl.style.display = "flex";
   };
   reader.readAsDataURL(file);
 
-  // Enable button
-  analyzeBtn.disabled = false;
-  analyzeBtn.setAttribute("aria-disabled", "false");
+  analyzeBtn.disabled     = false;
   analyzeText.textContent = "Analyse CT Scan";
-
-  // Hide previous results
   resultSection.style.display = "none";
 }
 
 function clearFile() {
-  selectedFile = null;
-  fileInput.value = "";
-  previewImg.src = "";
-  previewOverlay.style.display = "none";
-  previewOverlay.setAttribute("aria-hidden", "true");
-  dropContent.style.display = "flex";
-  analyzeBtn.disabled = true;
-  analyzeBtn.setAttribute("aria-disabled", "true");
-  analyzeText.textContent = "Select an image first";
+  selectedFile              = null;
+  fileInput.value           = "";
+  previewImg.src            = "";
+  previewOvl.style.display  = "none";
+  dropInner.style.display   = "flex";
+  analyzeBtn.disabled       = true;
+  analyzeText.textContent   = "Select an image first";
   resultSection.style.display = "none";
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// Analyse — send to backend
-// ══════════════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════════════
+// Analyse
+// ══════════════════════════════════════════════════════════════════════════
 
 analyzeBtn.addEventListener("click", runAnalysis);
 
 async function runAnalysis() {
   if (!selectedFile) return;
-
-  // Loading state
   setLoading(true);
 
-  const formData = new FormData();
-  formData.append("file", selectedFile);
+  const form = new FormData();
+  form.append("file", selectedFile);
 
   try {
-    const response = await fetch(API_URL, {
-      method: "POST",
-      body: formData,
-    });
-
-    if (!response.ok) {
-      const err = await response.json().catch(() => ({}));
-      throw new Error(err.detail || `Server error: ${response.status}`);
+    const res = await fetch(API_URL, { method: "POST", body: form });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || `Server error: ${res.status}`);
     }
-
-    const data = await response.json();
+    const data = await res.json();
     renderResult(data);
   } catch (err) {
-    showError(`Analysis failed: ${err.message}. Make sure the backend is running.`);
+    showError(`Analysis failed: ${err.message}<br/><br/>
+      💡 <strong>Tip:</strong> The free Render backend may be sleeping.
+      Wait 30 seconds and try again.`);
   } finally {
     setLoading(false);
   }
 }
 
-function setLoading(loading) {
-  if (loading) {
-    analyzeText.textContent = "Analysing…";
-    btnSpinner.style.display = "block";
-    analyzeBtn.disabled = true;
-  } else {
-    analyzeText.textContent = "Analyse CT Scan";
-    btnSpinner.style.display = "none";
-    analyzeBtn.disabled = false;
-  }
+function setLoading(on) {
+  analyzeBtn.disabled       = on;
+  analyzeText.textContent   = on ? "Analysing…" : "Analyse CT Scan";
+  btnSpinner.style.display  = on ? "block" : "none";
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════════════
 // Render result
-// ══════════════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════════════
 
 function renderResult(data) {
-  const cls        = data.predicted_class;
-  const confidence = data.confidence;   // 0–100
-  const scores     = data.scores;       // { Cyst: 0.xx, Normal: 0.xx, ... }
-  const message    = data.message;
-  const meta       = CLASS_META[cls] || CLASS_META.Normal;
+  const cls  = data.predicted_class;
+  const conf = data.confidence;     // 0–100
+  const scores = data.scores;
+  const msg  = data.message;
+  const m    = META[cls] || META.Normal;
 
-  // Icon + class name
-  resultIcon.textContent = meta.icon;
+  // Emoji + class
+  resultEmoji.textContent = m.emoji;
   resultClass.textContent = cls;
-  resultClass.className = `result-class class-${cls.toLowerCase()}`;
-  resultIconWrap.style.borderColor = `${meta.color}40`;
-  resultIconWrap.style.background  = `${meta.color}10`;
+  resultClass.className   = `result-class ${m.cssClass}`;
 
-  // Message
-  resultMessage.textContent = message;
-  resultMessage.style.borderLeftColor = meta.color;
+  // Message + border colour
+  resultMsg.textContent        = msg;
+  resultMsg.style.borderLeftColor = m.color;
 
-  // Confidence ring
-  const circumference = 213.63; // 2π × 34
-  const offset = circumference - (confidence / 100) * circumference;
-  confidencePct.textContent = `${Math.round(confidence)}%`;
+  // Ring
+  const pct    = Math.round(conf);
+  const offset = 213.63 - (conf / 100) * 213.63;
+  confPct.textContent           = `${pct}%`;
+  ringFill.style.stroke         = m.color;
+  setTimeout(() => { ringFill.style.strokeDashoffset = offset; }, 60);
 
-  // Inject SVG gradient + animate ring
-  setTimeout(() => {
-    ringFill.style.strokeDashoffset = offset;
-  }, 50);
-
-  // Ensure gradient def exists in SVG
-  const svgEl = document.querySelector(".confidence-ring");
-  if (!svgEl.querySelector("#ring-gradient")) {
-    const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
-    defs.innerHTML = `
-      <linearGradient id="ring-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-        <stop offset="0%" stop-color="${meta.color}"/>
-        <stop offset="100%" stop-color="#c084fc"/>
-      </linearGradient>`;
-    svgEl.appendChild(defs);
-  } else {
-    // Update gradient colour
-    const stop0 = svgEl.querySelector("#ring-gradient stop:first-child");
-    if (stop0) stop0.setAttribute("stop-color", meta.color);
-  }
-
-  // Scores bar chart
+  // Score bars
   scoresGrid.innerHTML = "";
-  const orderedClasses = ["Normal", "Cyst", "Stone", "Tumor"];
-  orderedClasses.forEach((label) => {
-    const score = scores[label] ?? 0;
-    const pct   = (score * 100).toFixed(1);
-    const m     = CLASS_META[label];
-
-    const row = document.createElement("div");
+  CLASS_ORDER.forEach((label) => {
+    const val  = (scores[label] ?? 0) * 100;
+    const pm   = META[label];
+    const row  = document.createElement("div");
     row.className = "score-row";
     row.innerHTML = `
-      <span class="score-label" style="color:${m.color}">${label}</span>
-      <div class="score-bar-track">
-        <div class="score-bar-fill" style="width:0%;background:${m.barColor}" data-target="${pct}"></div>
+      <span class="score-name" style="color:${pm.color}">${label}</span>
+      <div class="score-track">
+        <div class="score-fill" data-w="${val.toFixed(1)}" style="background:${pm.bar}"></div>
       </div>
-      <span class="score-pct">${pct}%</span>
-    `;
+      <span class="score-pct">${val.toFixed(1)}%</span>`;
     scoresGrid.appendChild(row);
   });
 
-  // Animate bars
-  setTimeout(() => {
-    document.querySelectorAll(".score-bar-fill").forEach((bar) => {
-      bar.style.width = `${bar.dataset.target}%`;
-    });
-  }, 100);
+  // Animate bars after paint
+  requestAnimationFrame(() => {
+    setTimeout(() => {
+      document.querySelectorAll(".score-fill").forEach(b => {
+        b.style.width = `${b.dataset.w}%`;
+      });
+    }, 80);
+  });
 
-  // Show result section
   resultSection.style.display = "block";
   resultSection.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════════════
 // Reset
-// ══════════════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════════════
 
 resetBtn.addEventListener("click", () => {
   clearFile();
   window.scrollTo({ top: 0, behavior: "smooth" });
 });
 
-// ══════════════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════════════
 // Error helper
-// ══════════════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════════════
 
-function showError(msg) {
+function showError(html) {
   resultSection.style.display = "block";
-  resultSection.innerHTML = `<div class="card error-card">⚠️ ${msg}</div>`;
+  resultSection.innerHTML = `<div class="error-box">⚠️ ${html}</div>`;
   resultSection.scrollIntoView({ behavior: "smooth" });
 }
