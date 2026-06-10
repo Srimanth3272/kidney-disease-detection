@@ -8,11 +8,62 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- CRITICAL: Inline CSS so background always loads even if style.css fails -->
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      background: #070b14 !important;
+      color: #f0f6ff;
+      font-family: 'Inter', system-ui, sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    .bg-wrapper {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+      background: #070b14;
+    }
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      opacity: 0.15;
+      animation: drift 18s ease-in-out infinite alternate;
+    }
+    .orb-1 {
+      width: 700px; height: 700px;
+      background: radial-gradient(circle, #38bdf8 0%, rgba(56,189,248,0) 70%);
+      top: -300px; left: -200px;
+    }
+    .orb-2 {
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, #818cf8 0%, rgba(129,140,248,0) 70%);
+      bottom: -200px; right: -150px;
+      animation-delay: -6s;
+    }
+    .orb-3 {
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, #c084fc 0%, rgba(192,132,252,0) 70%);
+      top: 50%; left: 50%;
+      margin-top: -200px; margin-left: -200px;
+      animation-delay: -12s;
+    }
+    @keyframes drift {
+      0%   { transform: translate(0,0) scale(1); }
+      50%  { transform: translate(40px,-50px) scale(1.08); }
+      100% { transform: translate(-20px,30px) scale(0.95); }
+    }
+    body > *:not(.bg-wrapper) { position: relative; z-index: 1; }
+  </style>
+
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-  <!-- Animated background -->
+  <!-- Animated Background -->
   <div class="bg-wrapper">
     <div class="orb orb-1"></div>
     <div class="orb orb-2"></div>
@@ -23,12 +74,10 @@
   <header class="header">
     <div class="container header-inner">
       <div class="logo">
-        <div class="logo-icon">
-          <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <ellipse cx="13" cy="20" rx="9" ry="15" fill="#38bdf8" opacity="0.85"/>
-            <ellipse cx="27" cy="20" rx="9" ry="15" fill="#818cf8" opacity="0.75"/>
-          </svg>
-        </div>
+        <svg width="36" height="36" viewBox="0 0 40 40" fill="none">
+          <ellipse cx="13" cy="20" rx="9" ry="15" fill="#38bdf8" opacity="0.9"/>
+          <ellipse cx="27" cy="20" rx="9" ry="15" fill="#818cf8" opacity="0.75"/>
+        </svg>
         <span class="logo-text">KidneyAI</span>
       </div>
       <div class="header-badges">
@@ -43,7 +92,10 @@
     <!-- Hero -->
     <section class="hero">
       <div class="hero-chip">Deep Learning · Transfer Learning · CNN</div>
-      <h1 class="hero-title">Kidney Disease<br/><span class="gradient-text">Detection System</span></h1>
+      <h1 class="hero-title">
+        Kidney Disease<br/>
+        <span class="gradient-text">Detection System</span>
+      </h1>
       <p class="hero-sub">
         Upload a CT scan and our AI model instantly classifies the kidney condition into
         <strong>Cyst</strong>, <strong>Stone</strong>, <strong>Tumor</strong>, or <strong>Normal</strong>.
@@ -53,26 +105,20 @@
     <!-- Upload Card -->
     <section class="section">
       <div class="card upload-card">
-
-        <div class="drop-zone" id="drop-zone" tabindex="0" role="button" aria-label="Upload CT scan image">
-          <!-- Default state -->
+        <div class="drop-zone" id="drop-zone" tabindex="0" role="button">
           <div class="drop-inner" id="drop-inner">
-            <div class="upload-svg-wrap">
-              <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
-                <rect width="56" height="56" rx="16" fill="#38bdf8" fill-opacity="0.1"/>
-                <path d="M28 36V20M28 20L22 26M28 20L34 26" stroke="#38bdf8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M18 40h20" stroke="#38bdf8" stroke-width="2.5" stroke-linecap="round"/>
-              </svg>
-            </div>
+            <svg width="56" height="56" viewBox="0 0 56 56" fill="none" style="margin-bottom:8px;">
+              <rect width="56" height="56" rx="16" fill="#38bdf8" fill-opacity="0.1"/>
+              <path d="M28 38V18M28 18L22 24M28 18L34 24" stroke="#38bdf8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M16 42h24" stroke="#38bdf8" stroke-width="2.5" stroke-linecap="round"/>
+            </svg>
             <p class="drop-title">Drop your CT scan here</p>
             <p class="drop-hint">Supports JPG, PNG, BMP, TIFF</p>
             <button class="btn-browse" id="browse-btn" type="button">Choose File</button>
           </div>
-
-          <!-- Preview (hidden until file chosen) -->
           <div class="preview-overlay" id="preview-overlay" style="display:none;">
             <img id="preview-img" alt="CT scan preview" />
-            <button class="remove-btn" id="remove-btn" type="button" title="Remove">✕</button>
+            <button class="remove-btn" id="remove-btn" type="button">✕</button>
           </div>
         </div>
 
@@ -87,8 +133,7 @@
 
     <!-- Result Card -->
     <section id="result-section" style="display:none;" class="section">
-      <div class="card result-card" id="result-card">
-
+      <div class="card result-card">
         <div class="result-top">
           <div class="result-emoji" id="result-emoji">✅</div>
           <div class="result-info">
@@ -96,13 +141,13 @@
             <h2 class="result-class" id="result-class">Normal</h2>
           </div>
           <div class="conf-ring-wrap">
-            <svg class="conf-ring" viewBox="0 0 80 80">
+            <svg width="80" height="80" viewBox="0 0 80 80">
               <circle cx="40" cy="40" r="34" fill="none" stroke="#1e293b" stroke-width="7"/>
               <circle id="ring-fill" cx="40" cy="40" r="34" fill="none"
                 stroke="#38bdf8" stroke-width="7" stroke-linecap="round"
                 stroke-dasharray="213.63" stroke-dashoffset="213.63"
                 transform="rotate(-90 40 40)"
-                style="transition: stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1);"/>
+                style="transition:stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1);"/>
             </svg>
             <span class="conf-pct" id="conf-pct">0%</span>
           </div>
@@ -116,7 +161,8 @@
         </div>
 
         <div class="disclaimer">
-          ⚠️ <strong>Medical Disclaimer:</strong> This tool is for research/educational purposes only and is not a substitute for professional medical diagnosis. Always consult a qualified physician.
+          ⚠️ <strong>Medical Disclaimer:</strong> This tool is for research and educational purposes only.
+          It is not a substitute for professional medical diagnosis. Always consult a qualified physician.
         </div>
 
         <button class="btn-reset" id="reset-btn" type="button">Analyse Another Scan</button>
@@ -140,33 +186,33 @@
         <div class="info-card">
           <div class="step-num">03</div>
           <h3>Instant Results</h3>
-          <p>Receive the predicted class and confidence scores for all 4 conditions.</p>
+          <p>Receive the predicted class and confidence scores for all 4 conditions instantly.</p>
         </div>
       </div>
     </section>
 
-    <!-- Conditions -->
+    <!-- Detectable Conditions -->
     <section class="section">
       <h2 class="section-title">Detectable Conditions</h2>
       <div class="four-grid">
-        <div class="class-card" style="--accent:#34d399;">
+        <div class="class-card" style="border-top-color:#34d399;">
           <div class="class-emoji">✅</div>
-          <h3>Normal</h3>
+          <h3 style="color:#34d399;">Normal</h3>
           <p>Healthy kidney with no detected abnormalities.</p>
         </div>
-        <div class="class-card" style="--accent:#60a5fa;">
+        <div class="class-card" style="border-top-color:#60a5fa;">
           <div class="class-emoji">🔵</div>
-          <h3>Cyst</h3>
+          <h3 style="color:#60a5fa;">Cyst</h3>
           <p>Fluid-filled sac on or inside the kidney. Usually benign.</p>
         </div>
-        <div class="class-card" style="--accent:#fbbf24;">
+        <div class="class-card" style="border-top-color:#fbbf24;">
           <div class="class-emoji">🟡</div>
-          <h3>Stone</h3>
-          <p>Hard mineral deposits (calculi) formed inside the kidney.</p>
+          <h3 style="color:#fbbf24;">Stone</h3>
+          <p>Hard mineral deposits formed inside the kidney.</p>
         </div>
-        <div class="class-card" style="--accent:#f87171;">
+        <div class="class-card" style="border-top-color:#f87171;">
           <div class="class-emoji">🔴</div>
-          <h3>Tumor</h3>
+          <h3 style="color:#f87171;">Tumor</h3>
           <p>Abnormal cell growth detected. Requires immediate medical attention.</p>
         </div>
       </div>
