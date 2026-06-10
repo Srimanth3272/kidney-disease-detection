@@ -3,226 +3,171 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>KidneyAI — CT Scan Disease Detection</title>
-  <meta name="description" content="AI-powered kidney disease detection from CT scans. Detects Cyst, Stone, Tumor, or Normal kidney conditions instantly." />
+  <title>KidneyAI — Kidney Disease Detection</title>
+  <meta name="description" content="Upload a kidney CT scan to detect Cyst, Stone, Tumor, or Normal condition using AI." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet" />
-
-  <!-- CRITICAL: Inline CSS so background always loads even if style.css fails -->
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body {
-      background: #070b14 !important;
-      color: #f0f6ff;
-      font-family: 'Inter', system-ui, sans-serif;
-      min-height: 100vh;
-      overflow-x: hidden;
-    }
-    .bg-wrapper {
-      position: fixed;
-      inset: 0;
-      z-index: 0;
-      pointer-events: none;
-      overflow: hidden;
-      background: #070b14;
-    }
-    .orb {
-      position: absolute;
-      border-radius: 50%;
-      opacity: 0.15;
-      animation: drift 18s ease-in-out infinite alternate;
-    }
-    .orb-1 {
-      width: 700px; height: 700px;
-      background: radial-gradient(circle, #38bdf8 0%, rgba(56,189,248,0) 70%);
-      top: -300px; left: -200px;
-    }
-    .orb-2 {
-      width: 600px; height: 600px;
-      background: radial-gradient(circle, #818cf8 0%, rgba(129,140,248,0) 70%);
-      bottom: -200px; right: -150px;
-      animation-delay: -6s;
-    }
-    .orb-3 {
-      width: 400px; height: 400px;
-      background: radial-gradient(circle, #c084fc 0%, rgba(192,132,252,0) 70%);
-      top: 50%; left: 50%;
-      margin-top: -200px; margin-left: -200px;
-      animation-delay: -12s;
-    }
-    @keyframes drift {
-      0%   { transform: translate(0,0) scale(1); }
-      50%  { transform: translate(40px,-50px) scale(1.08); }
-      100% { transform: translate(-20px,30px) scale(0.95); }
-    }
-    body > *:not(.bg-wrapper) { position: relative; z-index: 1; }
-  </style>
-
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-  <!-- Animated Background -->
-  <div class="bg-wrapper">
-    <div class="orb orb-1"></div>
-    <div class="orb orb-2"></div>
-    <div class="orb orb-3"></div>
-  </div>
-
   <!-- Header -->
   <header class="header">
-    <div class="container header-inner">
-      <div class="logo">
-        <svg width="36" height="36" viewBox="0 0 40 40" fill="none">
-          <ellipse cx="13" cy="20" rx="9" ry="15" fill="#38bdf8" opacity="0.9"/>
-          <ellipse cx="27" cy="20" rx="9" ry="15" fill="#818cf8" opacity="0.75"/>
-        </svg>
-        <span class="logo-text">KidneyAI</span>
-      </div>
-      <div class="header-badges">
-        <span class="badge">🤖 AI Powered</span>
-        <span class="badge">🔬 CT Scan Analysis</span>
-      </div>
+    <div class="logo">
+      <svg width="32" height="32" viewBox="0 0 40 40" fill="none">
+        <ellipse cx="13" cy="20" rx="9" ry="15" fill="#16a34a" opacity="0.85"/>
+        <ellipse cx="27" cy="20" rx="9" ry="15" fill="#15803d" opacity="0.65"/>
+      </svg>
+      <span>KidneyAI</span>
+    </div>
+    <div class="header-right">
+      <span class="pill">🤖 AI Detection</span>
+      <span class="pill">🔬 CT Scan Analysis</span>
     </div>
   </header>
 
-  <main class="container">
+  <!-- Main -->
+  <main>
 
-    <!-- Hero -->
-    <section class="hero">
-      <div class="hero-chip">Deep Learning · Transfer Learning · CNN</div>
-      <h1 class="hero-title">
-        Kidney Disease<br/>
-        <span class="gradient-text">Detection System</span>
-      </h1>
-      <p class="hero-sub">
-        Upload a CT scan and our AI model instantly classifies the kidney condition into
-        <strong>Cyst</strong>, <strong>Stone</strong>, <strong>Tumor</strong>, or <strong>Normal</strong>.
-      </p>
-    </section>
+    <!-- Hero text -->
+    <div class="hero">
+      <h1>Kidney Disease Detection</h1>
+      <p>Upload a CT scan image — our AI model instantly tells you if the kidney is <strong>Normal</strong>, has a <strong>Cyst</strong>, <strong>Stone</strong>, or <strong>Tumor</strong>.</p>
+    </div>
 
     <!-- Upload Card -->
-    <section class="section">
-      <div class="card upload-card">
-        <div class="drop-zone" id="drop-zone" tabindex="0" role="button">
-          <div class="drop-inner" id="drop-inner">
-            <svg width="56" height="56" viewBox="0 0 56 56" fill="none" style="margin-bottom:8px;">
-              <rect width="56" height="56" rx="16" fill="#38bdf8" fill-opacity="0.1"/>
-              <path d="M28 38V18M28 18L22 24M28 18L34 24" stroke="#38bdf8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M16 42h24" stroke="#38bdf8" stroke-width="2.5" stroke-linecap="round"/>
-            </svg>
-            <p class="drop-title">Drop your CT scan here</p>
-            <p class="drop-hint">Supports JPG, PNG, BMP, TIFF</p>
-            <button class="btn-browse" id="browse-btn" type="button">Choose File</button>
-          </div>
-          <div class="preview-overlay" id="preview-overlay" style="display:none;">
-            <img id="preview-img" alt="CT scan preview" />
-            <button class="remove-btn" id="remove-btn" type="button">✕</button>
-          </div>
+    <div class="card" id="upload-card">
+      <h2 class="card-title">Upload CT Scan Image</h2>
+      <p class="card-sub">Take a clear picture of the CT scan for accurate diagnosis.</p>
+
+      <!-- Drop zone -->
+      <div class="drop-zone" id="drop-zone" tabindex="0" role="button" aria-label="Click to upload CT scan">
+        <!-- Default -->
+        <div id="drop-default">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" class="upload-icon">
+            <path d="M24 8C24 8 14 18 14 26C14 31.52 18.48 36 24 36C29.52 36 34 31.52 34 26C34 18 24 8 24 8Z" stroke="#16a34a" stroke-width="2" fill="none"/>
+            <path d="M24 36V44" stroke="#16a34a" stroke-width="2" stroke-linecap="round"/>
+            <path d="M18 40h12" stroke="#16a34a" stroke-width="2" stroke-linecap="round"/>
+            <path d="M20 24l4-5 4 5M24 19v10" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <p class="drop-text">Tap here to choose or capture image</p>
+          <p class="drop-hint">JPG, PNG, BMP or TIFF accepted</p>
         </div>
 
-        <input type="file" id="file-input" accept="image/*" style="display:none;" />
-
-        <button class="btn-analyze" id="analyze-btn" type="button" disabled>
-          <span id="analyze-text">Select an image first</span>
-          <div class="spinner" id="btn-spinner" style="display:none;"></div>
-        </button>
+        <!-- Preview (shown after image selected) -->
+        <div id="drop-preview" style="display:none;">
+          <img id="preview-img" alt="Selected CT scan" />
+          <button id="remove-btn" class="remove-btn" type="button">✕ Remove</button>
+        </div>
       </div>
-    </section>
 
-    <!-- Result Card -->
-    <section id="result-section" style="display:none;" class="section">
-      <div class="card result-card">
-        <div class="result-top">
-          <div class="result-emoji" id="result-emoji">✅</div>
-          <div class="result-info">
-            <p class="result-label">Detected Condition</p>
-            <h2 class="result-class" id="result-class">Normal</h2>
-          </div>
-          <div class="conf-ring-wrap">
-            <svg width="80" height="80" viewBox="0 0 80 80">
-              <circle cx="40" cy="40" r="34" fill="none" stroke="#1e293b" stroke-width="7"/>
-              <circle id="ring-fill" cx="40" cy="40" r="34" fill="none"
-                stroke="#38bdf8" stroke-width="7" stroke-linecap="round"
-                stroke-dasharray="213.63" stroke-dashoffset="213.63"
-                transform="rotate(-90 40 40)"
-                style="transition:stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1);"/>
-            </svg>
-            <span class="conf-pct" id="conf-pct">0%</span>
-          </div>
+      <input type="file" id="file-input" accept="image/*" style="display:none;" />
+
+      <!-- Analyze button -->
+      <button class="btn-analyze" id="analyze-btn" type="button" disabled>
+        <svg id="btn-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <span id="analyze-text">Select an image to begin</span>
+        <div class="spinner" id="btn-spinner" style="display:none;"></div>
+      </button>
+    </div>
+
+    <!-- Result Card (hidden until prediction) -->
+    <div class="card result-card" id="result-card" style="display:none;">
+
+      <!-- Result header -->
+      <div class="result-header" id="result-header">
+        <div class="result-icon-box" id="result-icon-box">
+          <span id="result-icon">✅</span>
         </div>
-
-        <p class="result-msg" id="result-msg"></p>
-
-        <div class="scores-wrap">
-          <p class="scores-label">Confidence Scores</p>
-          <div id="scores-grid"></div>
+        <div>
+          <p class="result-label">Diagnosis Result</p>
+          <h2 class="result-class" id="result-class">Normal</h2>
         </div>
-
-        <div class="disclaimer">
-          ⚠️ <strong>Medical Disclaimer:</strong> This tool is for research and educational purposes only.
-          It is not a substitute for professional medical diagnosis. Always consult a qualified physician.
+        <div class="confidence-box">
+          <p class="conf-label">Confidence</p>
+          <p class="conf-value" id="conf-value">0%</p>
         </div>
-
-        <button class="btn-reset" id="reset-btn" type="button">Analyse Another Scan</button>
       </div>
-    </section>
 
-    <!-- How It Works -->
-    <section class="section">
+      <!-- Message -->
+      <div class="result-msg-box" id="result-msg-box">
+        <p id="result-msg"></p>
+      </div>
+
+      <!-- Score bars -->
+      <div class="scores-section">
+        <p class="scores-title">All Class Scores</p>
+        <div id="scores-grid"></div>
+      </div>
+
+      <!-- Disclaimer -->
+      <div class="disclaimer">
+        ⚠️ <strong>Disclaimer:</strong> This AI tool is for research purposes only and not a substitute for medical diagnosis. Always consult a doctor.
+      </div>
+
+      <!-- Try again -->
+      <button class="btn-reset" id="reset-btn" type="button">
+        ↩ Analyse Another Image
+      </button>
+    </div>
+
+    <!-- How it works -->
+    <div class="how-section">
       <h2 class="section-title">How It Works</h2>
-      <div class="three-grid">
-        <div class="info-card">
-          <div class="step-num">01</div>
-          <h3>Upload CT Scan</h3>
-          <p>Drag & drop or browse your kidney CT scan image (JPG or PNG).</p>
+      <div class="steps">
+        <div class="step">
+          <div class="step-circle">1</div>
+          <h3>Upload</h3>
+          <p>Choose a kidney CT scan image from your device.</p>
         </div>
-        <div class="info-card">
-          <div class="step-num">02</div>
-          <h3>AI Analysis</h3>
-          <p>Our CNN model processes the image — resized to 200×200, normalised, then classified.</p>
+        <div class="step-arrow">→</div>
+        <div class="step">
+          <div class="step-circle">2</div>
+          <h3>Analyse</h3>
+          <p>Our AI model processes and classifies the scan.</p>
         </div>
-        <div class="info-card">
-          <div class="step-num">03</div>
-          <h3>Instant Results</h3>
-          <p>Receive the predicted class and confidence scores for all 4 conditions instantly.</p>
+        <div class="step-arrow">→</div>
+        <div class="step">
+          <div class="step-circle">3</div>
+          <h3>Result</h3>
+          <p>Get instant diagnosis with confidence scores.</p>
         </div>
       </div>
-    </section>
+    </div>
 
-    <!-- Detectable Conditions -->
-    <section class="section">
+    <!-- Conditions -->
+    <div class="conditions-section">
       <h2 class="section-title">Detectable Conditions</h2>
-      <div class="four-grid">
-        <div class="class-card" style="border-top-color:#34d399;">
-          <div class="class-emoji">✅</div>
-          <h3 style="color:#34d399;">Normal</h3>
-          <p>Healthy kidney with no detected abnormalities.</p>
+      <div class="conditions-grid">
+        <div class="condition-card normal">
+          <span class="cond-emoji">✅</span>
+          <h3>Normal</h3>
+          <p>Healthy kidney with no abnormalities detected.</p>
         </div>
-        <div class="class-card" style="border-top-color:#60a5fa;">
-          <div class="class-emoji">🔵</div>
-          <h3 style="color:#60a5fa;">Cyst</h3>
-          <p>Fluid-filled sac on or inside the kidney. Usually benign.</p>
+        <div class="condition-card cyst">
+          <span class="cond-emoji">🔵</span>
+          <h3>Cyst</h3>
+          <p>Fluid-filled sac inside the kidney. Usually benign.</p>
         </div>
-        <div class="class-card" style="border-top-color:#fbbf24;">
-          <div class="class-emoji">🟡</div>
-          <h3 style="color:#fbbf24;">Stone</h3>
-          <p>Hard mineral deposits formed inside the kidney.</p>
+        <div class="condition-card stone">
+          <span class="cond-emoji">🟡</span>
+          <h3>Stone</h3>
+          <p>Hard mineral deposits formed in the kidney.</p>
         </div>
-        <div class="class-card" style="border-top-color:#f87171;">
-          <div class="class-emoji">🔴</div>
-          <h3 style="color:#f87171;">Tumor</h3>
-          <p>Abnormal cell growth detected. Requires immediate medical attention.</p>
+        <div class="condition-card tumor">
+          <span class="cond-emoji">🔴</span>
+          <h3>Tumor</h3>
+          <p>Abnormal cell growth. Needs immediate medical attention.</p>
         </div>
       </div>
-    </section>
+    </div>
 
   </main>
 
-  <footer class="footer">
-    <p>Built with <span style="color:#f87171;">♥</span> using TensorFlow · FastAPI · Vercel</p>
-    <p style="font-size:0.75rem;margin-top:4px;color:#475569;">Research Project — Not for clinical use</p>
+  <footer>
+    <p>Built with ♥ using TensorFlow · FastAPI · Vercel &nbsp;|&nbsp; Research Project — Not for clinical use</p>
   </footer>
 
   <script src="script.js"></script>

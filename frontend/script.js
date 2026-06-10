@@ -1,58 +1,53 @@
-/* ─── KidneyAI — script.js ──────────────────────────────────────────────── */
-
-// ══════════════════════════════════════════════════════════════════════════
-// 🔧 Backend URL — Render deployment
-// ══════════════════════════════════════════════════════════════════════════
+// ── Backend API (Render) ──────────────────────────────────────
 const API_URL = "https://kidney-disease-detection-t0y3.onrender.com/predict";
 
-// ── Class metadata ─────────────────────────────────────────────────────
+// ── Class metadata ────────────────────────────────────────────
 const META = {
-  Normal: { emoji: "✅", cssClass: "cls-normal", color: "#34d399", bar: "linear-gradient(90deg,#34d399,#059669)" },
-  Cyst:   { emoji: "🔵", cssClass: "cls-cyst",   color: "#60a5fa", bar: "linear-gradient(90deg,#60a5fa,#3b82f6)" },
-  Stone:  { emoji: "🟡", cssClass: "cls-stone",  color: "#fbbf24", bar: "linear-gradient(90deg,#fbbf24,#d97706)" },
-  Tumor:  { emoji: "🔴", cssClass: "cls-tumor",  color: "#f87171", bar: "linear-gradient(90deg,#f87171,#ef4444)" },
+  Normal: { emoji:"✅", cls:"r-normal", color:"#16a34a", bar:"#16a34a", border:"#bbf7d0", bg:"#f0fdf4" },
+  Cyst:   { emoji:"🔵", cls:"r-cyst",   color:"#2563eb", bar:"#2563eb", border:"#bfdbfe", bg:"#eff6ff" },
+  Stone:  { emoji:"🟡", cls:"r-stone",  color:"#d97706", bar:"#d97706", border:"#fde68a", bg:"#fffbeb" },
+  Tumor:  { emoji:"🔴", cls:"r-tumor",  color:"#dc2626", bar:"#dc2626", border:"#fecaca", bg:"#fef2f2" },
 };
-const CLASS_ORDER = ["Normal", "Cyst", "Stone", "Tumor"];
+const ORDER = ["Normal","Cyst","Stone","Tumor"];
 
-// ── DOM refs ───────────────────────────────────────────────────────────
-const dropZone      = document.getElementById("drop-zone");
-const dropInner     = document.getElementById("drop-inner");
-const previewOvl    = document.getElementById("preview-overlay");
-const previewImg    = document.getElementById("preview-img");
-const fileInput     = document.getElementById("file-input");
-const browseBtn     = document.getElementById("browse-btn");
-const removeBtn     = document.getElementById("remove-btn");
-const analyzeBtn    = document.getElementById("analyze-btn");
-const analyzeText   = document.getElementById("analyze-text");
-const btnSpinner    = document.getElementById("btn-spinner");
-const resultSection = document.getElementById("result-section");
-const resultEmoji   = document.getElementById("result-emoji");
+// ── DOM refs ──────────────────────────────────────────────────
+const dropZone    = document.getElementById("drop-zone");
+const dropDefault = document.getElementById("drop-default");
+const dropPreview = document.getElementById("drop-preview");
+const previewImg  = document.getElementById("preview-img");
+const fileInput   = document.getElementById("file-input");
+const removeBtn   = document.getElementById("remove-btn");
+const analyzeBtn  = document.getElementById("analyze-btn");
+const analyzeText = document.getElementById("analyze-text");
+const btnIcon     = document.getElementById("btn-icon");
+const btnSpinner  = document.getElementById("btn-spinner");
+
+const resultCard    = document.getElementById("result-card");
+const resultHeader  = document.getElementById("result-header");
+const resultIconBox = document.getElementById("result-icon-box");
+const resultIcon    = document.getElementById("result-icon");
 const resultClass   = document.getElementById("result-class");
+const confValue     = document.getElementById("conf-value");
+const resultMsgBox  = document.getElementById("result-msg-box");
 const resultMsg     = document.getElementById("result-msg");
-const confPct       = document.getElementById("conf-pct");
-const ringFill      = document.getElementById("ring-fill");
 const scoresGrid    = document.getElementById("scores-grid");
 const resetBtn      = document.getElementById("reset-btn");
 
 let selectedFile = null;
 
-// ══════════════════════════════════════════════════════════════════════════
-// Upload / Preview
-// ══════════════════════════════════════════════════════════════════════════
+// ── Upload / Preview ──────────────────────────────────────────
 
-browseBtn.addEventListener("click", (e) => { e.stopPropagation(); fileInput.click(); });
 dropZone.addEventListener("click", () => { if (!selectedFile) fileInput.click(); });
 dropZone.addEventListener("keydown", (e) => {
   if ((e.key === "Enter" || e.key === " ") && !selectedFile) { e.preventDefault(); fileInput.click(); }
 });
-
 fileInput.addEventListener("change", () => {
   if (fileInput.files?.[0]) handleFile(fileInput.files[0]);
 });
 
 // Drag & drop
 dropZone.addEventListener("dragover",  (e) => { e.preventDefault(); dropZone.classList.add("dragover"); });
-dropZone.addEventListener("dragleave", ()  => dropZone.classList.remove("dragover"));
+dropZone.addEventListener("dragleave", () => dropZone.classList.remove("dragover"));
 dropZone.addEventListener("drop", (e) => {
   e.preventDefault();
   dropZone.classList.remove("dragover");
@@ -64,38 +59,35 @@ removeBtn.addEventListener("click", (e) => { e.stopPropagation(); clearFile(); }
 function handleFile(file) {
   const allowed = ["image/jpeg","image/jpg","image/png","image/bmp","image/tiff"];
   if (!allowed.includes(file.type)) {
-    showError("Please upload a valid image file (JPG, PNG, BMP, or TIFF).");
+    alert("Please upload a JPG, PNG, BMP, or TIFF image.");
     return;
   }
   selectedFile = file;
-
   const reader = new FileReader();
   reader.onload = (e) => {
-    previewImg.src     = e.target.result;
-    dropInner.style.display  = "none";
-    previewOvl.style.display = "flex";
+    previewImg.src = e.target.result;
+    dropDefault.style.display = "none";
+    dropPreview.style.display = "flex";
   };
   reader.readAsDataURL(file);
 
   analyzeBtn.disabled     = false;
-  analyzeText.textContent = "Analyse CT Scan";
-  resultSection.style.display = "none";
+  analyzeText.textContent = "Analyze Image";
+  resultCard.style.display = "none";
 }
 
 function clearFile() {
-  selectedFile              = null;
-  fileInput.value           = "";
-  previewImg.src            = "";
-  previewOvl.style.display  = "none";
-  dropInner.style.display   = "flex";
-  analyzeBtn.disabled       = true;
-  analyzeText.textContent   = "Select an image first";
-  resultSection.style.display = "none";
+  selectedFile = null;
+  fileInput.value = "";
+  previewImg.src = "";
+  dropPreview.style.display  = "none";
+  dropDefault.style.display  = "flex";
+  analyzeBtn.disabled        = true;
+  analyzeText.textContent    = "Select an image to begin";
+  resultCard.style.display   = "none";
 }
 
-// ══════════════════════════════════════════════════════════════════════════
-// Analyse
-// ══════════════════════════════════════════════════════════════════════════
+// ── Analyse ───────────────────────────────────────────────────
 
 analyzeBtn.addEventListener("click", runAnalysis);
 
@@ -107,17 +99,15 @@ async function runAnalysis() {
   form.append("file", selectedFile);
 
   try {
-    const res = await fetch(API_URL, { method: "POST", body: form });
+    const res = await fetch(API_URL, { method:"POST", body: form });
     if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || `Server error: ${res.status}`);
+      const e = await res.json().catch(() => ({}));
+      throw new Error(e.detail || `Server error: ${res.status}`);
     }
     const data = await res.json();
     renderResult(data);
   } catch (err) {
-    showError(`Analysis failed: ${err.message}<br/><br/>
-      💡 <strong>Tip:</strong> The free Render backend may be sleeping.
-      Wait 30 seconds and try again.`);
+    showError(err.message);
   } finally {
     setLoading(false);
   }
@@ -125,43 +115,42 @@ async function runAnalysis() {
 
 function setLoading(on) {
   analyzeBtn.disabled       = on;
-  analyzeText.textContent   = on ? "Analysing…" : "Analyse CT Scan";
+  analyzeText.textContent   = on ? "Analysing…" : "Analyze Image";
+  btnIcon.style.display     = on ? "none" : "block";
   btnSpinner.style.display  = on ? "block" : "none";
 }
 
-// ══════════════════════════════════════════════════════════════════════════
-// Render result
-// ══════════════════════════════════════════════════════════════════════════
+// ── Render result ─────────────────────────────────────────────
 
 function renderResult(data) {
-  const cls  = data.predicted_class;
-  const conf = data.confidence;     // 0–100
+  const cls    = data.predicted_class;
+  const conf   = data.confidence;      // 0–100
   const scores = data.scores;
-  const msg  = data.message;
-  const m    = META[cls] || META.Normal;
+  const msg    = data.message;
+  const m      = META[cls] || META.Normal;
 
-  // Emoji + class
-  resultEmoji.textContent = m.emoji;
+  // Icon + class name + colours
+  resultIcon.textContent  = m.emoji;
+  resultIconBox.style.background   = m.bg;
+  resultIconBox.style.borderColor  = m.border;
   resultClass.textContent = cls;
-  resultClass.className   = `result-class ${m.cssClass}`;
+  resultClass.className   = `result-class ${m.cls}`;
+  confValue.textContent   = `${Math.round(conf)}%`;
+  confValue.style.color   = m.color;
 
-  // Message + border colour
-  resultMsg.textContent        = msg;
-  resultMsg.style.borderLeftColor = m.color;
-
-  // Ring
-  const pct    = Math.round(conf);
-  const offset = 213.63 - (conf / 100) * 213.63;
-  confPct.textContent           = `${pct}%`;
-  ringFill.style.stroke         = m.color;
-  setTimeout(() => { ringFill.style.strokeDashoffset = offset; }, 60);
+  // Message
+  resultMsg.textContent           = msg;
+  resultMsgBox.style.borderLeftColor = m.color;
+  resultMsgBox.style.background      = m.bg;
+  resultMsgBox.style.borderColor     = m.border;
+  resultMsgBox.style.borderLeftColor = m.color;
 
   // Score bars
   scoresGrid.innerHTML = "";
-  CLASS_ORDER.forEach((label) => {
-    const val  = (scores[label] ?? 0) * 100;
-    const pm   = META[label];
-    const row  = document.createElement("div");
+  ORDER.forEach((label) => {
+    const val = ((scores[label] ?? 0) * 100);
+    const pm  = META[label];
+    const row = document.createElement("div");
     row.className = "score-row";
     row.innerHTML = `
       <span class="score-name" style="color:${pm.color}">${label}</span>
@@ -172,7 +161,7 @@ function renderResult(data) {
     scoresGrid.appendChild(row);
   });
 
-  // Animate bars after paint
+  // Animate bars
   requestAnimationFrame(() => {
     setTimeout(() => {
       document.querySelectorAll(".score-fill").forEach(b => {
@@ -181,25 +170,26 @@ function renderResult(data) {
     }, 80);
   });
 
-  resultSection.style.display = "block";
-  resultSection.scrollIntoView({ behavior: "smooth", block: "start" });
+  resultCard.style.display = "block";
+  resultCard.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-// ══════════════════════════════════════════════════════════════════════════
-// Reset
-// ══════════════════════════════════════════════════════════════════════════
+// ── Reset ─────────────────────────────────────────────────────
 
 resetBtn.addEventListener("click", () => {
   clearFile();
   window.scrollTo({ top: 0, behavior: "smooth" });
 });
 
-// ══════════════════════════════════════════════════════════════════════════
-// Error helper
-// ══════════════════════════════════════════════════════════════════════════
+// ── Error helper ──────────────────────────────────────────────
 
-function showError(html) {
-  resultSection.style.display = "block";
-  resultSection.innerHTML = `<div class="error-box">⚠️ ${html}</div>`;
-  resultSection.scrollIntoView({ behavior: "smooth" });
+function showError(msg) {
+  resultCard.style.display = "block";
+  resultCard.innerHTML = `
+    <div class="error-box">
+      <strong>⚠️ Analysis Failed</strong>
+      ${msg}<br/><br/>
+      💡 <em>The free Render server may be sleeping (first request takes ~30 sec). Please wait and try again.</em>
+    </div>`;
+  resultCard.scrollIntoView({ behavior:"smooth" });
 }
