@@ -41,11 +41,6 @@ def load_model():
     return model
 
 
-# Load at startup so the first request isn't slow
-@app.on_event("startup")
-async def startup_event():
-    load_model()
-
 
 # ── Helper ────────────────────────────────────────────────────────────────────
 def preprocess_image(image_bytes: bytes) -> np.ndarray:
