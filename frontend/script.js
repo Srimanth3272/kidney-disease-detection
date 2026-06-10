@@ -95,11 +95,25 @@ async function runAnalysis() {
   if (!selectedFile) return;
   setLoading(true);
 
+  // Show wake-up hint after 5 seconds (Render free tier sleeps)
+  const hintTimer = setTimeout(() => {
+    analyzeText.textContent = "Waking up server… (30 sec)";
+  }, 5000);
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 90000); // 90s timeout
+
   const form = new FormData();
   form.append("file", selectedFile);
 
   try {
-    const res = await fetch(API_URL, { method:"POST", body: form });
+    const res = await fetch(API_URL, {
+      method: "POST",
+      body: form,
+      signal: controller.signal
+    });
+    clearTimeout(hintTimer);
+    clearTimeout(timeout);
     if (!res.ok) {
       const e = await res.json().catch(() => ({}));
       throw new Error(e.detail || `Server error: ${res.status}`);
@@ -107,7 +121,13 @@ async function runAnalysis() {
     const data = await res.json();
     renderResult(data);
   } catch (err) {
-    showError(err.message);
+    clearTimeout(hintTimer);
+    clearTimeout(timeout);
+    if (err.name === "AbortError") {
+      showError("Request timed out. The free server is still starting up. Please wait 30 seconds and try again.");
+    } else {
+      showError(err.message);
+    }
   } finally {
     setLoading(false);
   }

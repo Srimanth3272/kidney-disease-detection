@@ -36,7 +36,7 @@ def load_model():
     global model
     if model is None:
         print(f"Loading model from {MODEL_PATH} …")
-        model = tf.keras.models.load_model(MODEL_PATH)
+        model = tf.keras.models.load_model(MODEL_PATH, compile=False)
         print("Model loaded successfully.")
     return model
 
